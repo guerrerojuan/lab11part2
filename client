@@ -1,0 +1,94 @@
+import java.io.*;
+import java.net.*;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+
+public class Client extends JFrame {
+  // Text field for receiving radius
+  private JTextField jtf = new JTextField();
+  private JTextField jtf2 = new JTextField();
+  
+  // Text area to display contents
+  private JTextArea jta = new JTextArea();
+  private JTextArea jta2 = new JTextArea();
+  
+  // IO streams
+  private DataOutputStream toServer;
+  private DataInputStream fromServer;
+  
+  public static void main(String[] args) {
+    new Client();
+  }
+  
+  public Client() {
+    // Panel p to hold the label and text field
+    JPanel p = new JPanel();
+    p.setLayout(new BorderLayout());
+    p.add(new JLabel("Enter two numbers"), BorderLayout.WEST);
+    p.add(jtf, BorderLayout.CENTER);
+    p.add(jtf2, BorderLayout.AFTER_LAST_LINE);
+    jtf.setHorizontalAlignment(JTextField.RIGHT);
+    jtf2.setHorizontalAlignment(JTextField.RIGHT);
+    
+    setLayout(new BorderLayout());
+    add(p, BorderLayout.NORTH);
+    add(new JScrollPane(jta), BorderLayout.CENTER);
+    add(new JScrollPane(jta2), BorderLayout.CENTER);
+    
+    jtf.addActionListener(new Listener()); // Register listener
+    jtf2.addActionListener(new Listener());
+    
+    setTitle("Client");
+    setSize(500, 300);
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setVisible(true); // It is necessary to show the frame here!
+    
+    try {
+      // Create a socket to connect to the server
+      Socket socket = new Socket("localhost", 8000);
+      // Socket socket = new Socket("xxx.xxx.xxx.xxx", 8000);
+      // Socket socket = new Socket("yyy.edu", 8000);
+      
+      // Create an input stream to receive data from the server
+      fromServer = new DataInputStream(
+      socket.getInputStream());
+      
+      // Create an output stream to send data to the server
+      toServer =
+      new DataOutputStream(socket.getOutputStream());
+    }
+    catch (IOException ex) {
+      jta.append(ex.toString() + '\n');
+    }
+  }
+  
+  private class Listener implements ActionListener {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      try {
+        // Get the radius from the text field
+        double number1 = Double.parseDouble(jtf.getText().trim());
+        
+        
+        // Send the radius to the server
+        toServer.writeDouble(number1);
+        
+        
+        double number2 = Double.parseDouble(jtf2.getText().trim());
+        toServer.writeDouble(number2);
+        toServer.flush();
+        // Get area from the server
+        
+        double prime = fromServer.readDouble();
+        
+        // Display to the text area
+        jta.append("First prime between " + number1 + " and " + number2 + "is: " + prime + " \n");
+        
+      }
+      catch (IOException ex) {
+        System.err.println(ex);
+      }
+    }
+  }
+}
